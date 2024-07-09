@@ -1,3 +1,4 @@
+import os
 import mechanicalsoup as ms
 import redis
 import configparser
@@ -45,7 +46,7 @@ def write_to_elastic(es, url, html):
     # we must decode our url into a string of a specific encoding
     # for it to be valid JSON
     url = url.decode('utf-8') 
-    es.index(index='webpages', document={ 'url': url, 'html': html })
+    es.index(index='scrape', document={ 'url': url, 'html': html })
 
 def crawl(browser, r, es, neo, url):
     # Download url
@@ -79,13 +80,22 @@ neo = Neo4JConnector("bolt://localhost:7689", "neo4j", "db_is_awesom3")
 neo.flush_db()
 
 # Initialize Elasticsearch
-config = configparser.ConfigParser()
-config.read('example.ini')
-#print(config.read('example.ini')) # if loaded should print => ['example.ini']
+# connecting to local elastic cluster
+username = 'elastic'
+password = os.getenv('ELASTIC_PASSWORD') # Value you set in the environment variable
+
 es = Elasticsearch(
-        cloud_id=config['ELASTIC']['cloud_id'],
-        http_auth=(config['ELASTIC']['user'], config['ELASTIC']['password'])
+    "http://localhost:9200",
+    basic_auth=(username, password)
 )
+
+# print(es.info())
+
+# # connecting to elastic cloud
+# es = Elasticsearch(
+#   "https://a5bc75974ab14099ac0d65a603796367.us-west-1.aws.found.io:443",
+#   api_key="U3Zna21aQUJsVkp6MUxEWlhXSzc6T2psQ0tDVG1RYkN1YTU0QWJpWDkxQQ=="
+# )
 
 # Initialize Redis
 r = redis.Redis()
