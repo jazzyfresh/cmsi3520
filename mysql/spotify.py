@@ -1,44 +1,48 @@
 import pandas as pd
 import mysql.connector
-import pymysql
+from sqlalchemy import create_engine
+from sqlalchemy import text
 
 ## Initialize database connection and cursor
 ## macOS does not need a password
-## other installs use password="your_password"
-
+## other installs use an environment variable:
 # password = os.getenv("MYSQL_PASSWORD")
-connection = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    # password=password,
-    database="spotify"
-)
 
-engine = create_engine("mysql+pymysql://root:" + password + "@localhost/spotify")
+host = "localhost"
+user = "root"
+password = ""
+database = "test" # make sure to create the database in mysql client first
+connection_url = "mysql+mysqlconnector://root:@localhost:3306/test"
+engine = create_engine(connection_url, echo=True)
+
+with engine.connect() as connection:
+    results = connection.execute(text("SHOW DATABASES"));
+    for x in results.mappings():
+        print(x)
+    connection.close()
 
 
-# cursor = connection.cursor()
-
-
-## Load csv datasets into memory w/ Pandas
+# Load csv datasets into memory w/ Pandas
 songs = pd.read_csv("spotify_songs.csv")
+print(songs.head())
+
+# Load panda dataframes into mysql tables
+with engine.connect() as connection:
+    songs.to_sql("songs", connection) 
+
+# # Testing large dataset
+# # TODO: dataset too large, pandas ran out of memory
 # playlists = pd.read_csv("spotify_playlists.csv")
-
-## Load panda dataframes into mysql tables
-songs.to_sql("songs ", connection, if_exists="replace", index=False) 
-# df.to_sql("playlists", connection, if_exists="replace", index=False) 
-
+# print(playlists.head())
+# with engine.connect() as connection:
+#     playlists.to_sql("playlists", connection)
 
 
-# ## Execute a query
-# ## You don't need the SQL semicolon ; 
-# cursor.execute("SELECT * FROM songs LIMIT 10")
-#
-# ## Fetch all results
-# results = cursor.fetchall()
-#
-# ## Print the results
-# for x in results:
-#   print(x)
+# Execute a query
+# You don't need the SQL semicolon ; 
+with engine.connect() as connection:
+    results = connection.execute("SELECT * FROM songs LIMIT 10")
+    for x in results.mappings():
+        print(x)
+    connection.close()
 
-connection.close()
