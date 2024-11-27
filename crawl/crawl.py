@@ -21,13 +21,31 @@ def scrape_links(link, browser):
     wikipedia_domain = "https://en.wikipedia.org"
     new_links = []
     for href in hrefs:
-        if href and href.startswith("/wiki/"):
+        if href and filter(href):
             ## TODO: more filtering of links
             new_links.append(wikipedia_domain + href)
 
     return new_links
 
 
+def filter(href):
+    return (
+        href.startswith("/wiki/") and
+        "Help:" not in href and
+        "Special:" not in href and
+        "Wikipedia:" not in href and
+        "Portal:" not in href and
+        "Category:" not in href and
+        href != "/wiki/Main_Page"
+    )
+
+## TESTS ##
+# print("/wiki/Main_Page", filter("/wiki/Main_Page"))
+# print("/wiki/Wikipedia:General_disclaimer", filter("/wiki/Wikipedia:General_disclaimer"))
+# print("/wiki/Portal:Current_events", filter("/wiki/Portal:Current_events"))
+# print("/wiki/Category:Wikipedia_contents", filter("/wiki/Category:Wikipedia_contents"))
+# print("/wiki/Special:Random", filter("/wiki/Special:Random"))
+# exit()
 
 ## MAIN WEB CRAWL LOOP ##
 
