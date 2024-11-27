@@ -6,13 +6,11 @@ import redis
 #   parse html for links
 #   add links to queue
 
-def scrape_links(link):
+def scrape_links(link, browser):
 
     #download html for link url
-    ## TODO: re-use browser object
-    browser = mechanicalsoup.StatefulBrowser()
-    browser.open(link)
     print(link)
+    browser.open(link)
 
     #find a tags
     a_tags = browser.page.find_all("a")
@@ -40,10 +38,13 @@ r = redis.Redis()
 start_url = "https://en.wikipedia.org/wiki/Redis"
 r.rpush("links", start_url)
 
+# Initialize headless browser
+browser = mechanicalsoup.StatefulBrowser()
+
 # Start crawl
 while link := r.lpop("links"):
     r.hset("visited", link, 1)
-    new_links = scrape_links(link)
+    new_links = scrape_links(link, browser)
     r.rpush("links", *new_links)
 
 
