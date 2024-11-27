@@ -1,4 +1,5 @@
 import mechanicalsoup
+import redis
 # start link
 # for each link:
 #   mark link as visited (use map)
@@ -8,8 +9,10 @@ import mechanicalsoup
 def scrape_links(link):
 
     #download html for link url
+    ## TODO: re-use browser object
     browser = mechanicalsoup.StatefulBrowser()
     browser.open(link)
+    print(link)
 
     #find a tags
     a_tags = browser.page.find_all("a")
@@ -30,15 +33,17 @@ def scrape_links(link):
 
 ## MAIN WEB CRAWL LOOP ##
 
+# Initialize Redis connection
+r = redis.Redis()
+
 # Initialize links queue w/ site root
 start_url = "https://en.wikipedia.org/wiki/Redis"
-links.append(start_url)
-visited = {}
+r.rpush("links", start_url)
 
 # Start crawl
-for link in links:
-    visited[link] = True
+while link := r.lpop("links"):
+    r.hset("visited", link, 1)
     new_links = scrape_links(link)
-    links.extend(new_links)
+    r.rpush("links", *new_links)
 
 
